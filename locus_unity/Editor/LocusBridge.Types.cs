@@ -46,6 +46,25 @@ namespace Locus
             public string source;
         }
 
+        [Serializable]
+        private class PlayModeTestsRequest
+        {
+            public string[] testNames;
+            public string[] assemblyNames;
+        }
+
+        [Serializable]
+        private class PlayModeTestsStatusPayload
+        {
+            public string guid;
+            public string state;
+            public bool active;
+            public string resultFile;
+            public string summary;
+            public string error;
+            public long updatedAtMs;
+        }
+
         public sealed class ScriptGlobals
         {
             private readonly StringBuilder _output = new StringBuilder(256);

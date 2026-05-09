@@ -137,6 +137,11 @@ namespace Locus
             AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+            EditorApplication.delayCall += delegate
+            {
+                string ignored;
+                EnsurePlayModeTestCallbacksRegistered(out ignored);
+            };
         }
 
         private static void OnQuitting()
@@ -330,10 +335,16 @@ namespace Locus
         {
             // afterAssemblyReload is the authoritative completion point for a successful recompile.
             if (!SessionState.GetBool(SessionKey_RecompileInProgress, false))
+            {
+                string ignored;
+                EnsurePlayModeTestCallbacksRegistered(out ignored);
                 return;
+            }
 
             SessionState.SetBool(SessionKey_RecompileInProgress, false);
             SetCompileResult("ok");
+            string callbackError;
+            EnsurePlayModeTestCallbacksRegistered(out callbackError);
         }
 
         private static void InvalidateCompilationCaches()
@@ -1106,6 +1117,15 @@ namespace Locus
                         });
                         return await tcs.Task;
                     }
+
+                    case "playmode_tests_start":
+                        return HandlePlayModeTestsStart(reqId, msg.message);
+
+                    case "playmode_tests_status":
+                        return HandlePlayModeTestsStatus(reqId);
+
+                    case "playmode_tests_cancel":
+                        return HandlePlayModeTestsCancel(reqId);
 
                     case "select_asset":
                     {

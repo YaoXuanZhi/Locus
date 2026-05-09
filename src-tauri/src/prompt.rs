@@ -25,6 +25,7 @@ pub mod tools {
     pub const UNITY_YAML_SEARCH: &str = include_str!("../../tools/unity_yaml_search.json");
     pub const UNITY_YAML_READ: &str = include_str!("../../tools/unity_yaml_read.json");
     pub const UNITY_RECOMPILE: &str = include_str!("../../tools/unity_recompile.json");
+    pub const RUN_PLAYMODE_TESTS: &str = include_str!("../../tools/run_playmode_tests.json");
     pub const LIST: &str = include_str!("../../tools/list.json");
     pub const ASK: &str = include_str!("../../tools/ask.json");
     pub const CANVAS: &str = include_str!("../../tools/canvas.json");
@@ -89,6 +90,7 @@ mod tests {
             ("unity_yaml_search", tools::UNITY_YAML_SEARCH),
             ("unity_yaml_read", tools::UNITY_YAML_READ),
             ("unity_recompile", tools::UNITY_RECOMPILE),
+            ("run_playmode_tests", tools::RUN_PLAYMODE_TESTS),
             ("list", tools::LIST),
             ("ask", tools::ASK),
             ("canvas", tools::CANVAS),

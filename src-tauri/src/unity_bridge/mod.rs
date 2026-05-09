@@ -66,6 +66,25 @@ pub struct UnityExecuteProgressSnapshot {
     pub source: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayModeTestsStatus {
+    #[serde(default)]
+    pub guid: String,
+    #[serde(default)]
+    pub state: String,
+    #[serde(default)]
+    pub active: bool,
+    #[serde(default)]
+    pub result_file: String,
+    #[serde(default)]
+    pub summary: String,
+    #[serde(default)]
+    pub error: String,
+    #[serde(default)]
+    pub updated_at_ms: i64,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SelectAssetRequest<'a> {
@@ -936,6 +955,50 @@ pub fn import_assets_fire_and_forget(project_path: &str, asset_paths: Vec<String
             Err(e) => eprintln!("[Locus] import_assets skipped: {}", e),
         }
     });
+}
+
+pub async fn playmode_tests_start(project_path: &str) -> Result<PlayModeTestsStatus, String> {
+    let op_lock = project_unity_op_lock(project_path).await;
+    let _guard = op_lock.lock().await;
+    let resp = send_message(project_path, "playmode_tests_start", "{}").await?;
+    if !resp.ok {
+        return Err(resp
+            .error
+            .unwrap_or_else(|| "playmode_tests_start failed".to_string()));
+    }
+    let payload = resp
+        .message
+        .unwrap_or_else(|| "{\"state\":\"unknown\",\"active\":false}".to_string());
+    serde_json::from_str::<PlayModeTestsStatus>(&payload)
+        .map_err(|error| format!("Failed to parse playmode_tests_start payload: {}", error))
+}
+
+pub async fn playmode_tests_status(project_path: &str) -> Result<PlayModeTestsStatus, String> {
+    let resp = send_message(project_path, "playmode_tests_status", "").await?;
+    if !resp.ok {
+        return Err(resp
+            .error
+            .unwrap_or_else(|| "playmode_tests_status failed".to_string()));
+    }
+    let payload = resp
+        .message
+        .unwrap_or_else(|| "{\"state\":\"unknown\",\"active\":false}".to_string());
+    serde_json::from_str::<PlayModeTestsStatus>(&payload)
+        .map_err(|error| format!("Failed to parse playmode_tests_status payload: {}", error))
+}
+
+pub async fn playmode_tests_cancel(project_path: &str) -> Result<PlayModeTestsStatus, String> {
+    let resp = send_message(project_path, "playmode_tests_cancel", "").await?;
+    if !resp.ok {
+        return Err(resp
+            .error
+            .unwrap_or_else(|| "playmode_tests_cancel failed".to_string()));
+    }
+    let payload = resp
+        .message
+        .unwrap_or_else(|| "{\"state\":\"unknown\",\"active\":false}".to_string());
+    serde_json::from_str::<PlayModeTestsStatus>(&payload)
+        .map_err(|error| format!("Failed to parse playmode_tests_cancel payload: {}", error))
 }
 
 pub fn format_unity_execute_progress_delta(snapshot: &UnityExecuteProgressSnapshot) -> String {

@@ -1,0 +1,9 @@
+{
+  "name": "Unity Flow",
+  "description": "Automated Unity PlayMode test orchestration, flow task management, and CI-style test execution.",
+  "tools": ["read", "write", "edit", "bash", "grep", "list", "todowrite", "ask_user_question", "unity_execute", "unity_run_states", "unity_recompile", "run_playmode_tests", "unity_asset_search", "unity_ref_search", "unity_yaml_list", "unity_yaml_search", "unity_yaml_read", "knowledge_list", "knowledge_query", "knowledge_read", "knowledge_create", "knowledge_edit"],
+  "sub_agents": ["explorer"],
+  "default": false,
+  "default_effort": "medium",
+  "model_recommendation": "large"
+}

@@ -349,3 +349,149 @@ pub(super) fn unity_recompile() -> ToolDef {
         }),
     }
 }
+
+pub(super) fn run_playmode_tests() -> ToolDef {
+    let prompt = crate::prompt::parse_tool_prompt(crate::prompt::tools::RUN_PLAYMODE_TESTS);
+    ToolDef {
+        name: "run_playmode_tests".to_string(),
+        description: prompt.description,
+        parameters: prompt.parameters,
+        execute: make_exec(|args, ctx| {
+            Box::pin(async move {
+                let action = args
+                    .get("action")
+                    .and_then(|value| value.as_str())
+                    .map(str::trim)
+                    .unwrap_or("");
+                if action.is_empty() {
+                    return ToolResult {
+                        output: "Missing required parameter: action".to_string(),
+                        is_error: true,
+                    };
+                }
+
+                let project_path = match args.get("project_path").and_then(|v| v.as_str()) {
+                    Some(path) if !path.trim().is_empty() => path.trim().to_string(),
+                    _ => match ctx.working_dir {
+                        Some(path) if !path.trim().is_empty() => path.trim().to_string(),
+                        _ => {
+                            return ToolResult {
+                                output: "Missing required parameter: project_path".to_string(),
+                                is_error: true,
+                            }
+                        }
+                    },
+                };
+
+                match action {
+                    "start" => match crate::unity_flow::start_run_playmode_tests(&project_path).await
+                    {
+                        Ok(result) => ToolResult {
+                            output: serde_json::json!({
+                                "task_id": result.task_id,
+                                "state": result.state,
+                                "message": "playmode test flow task created"
+                            })
+                            .to_string(),
+                            is_error: false,
+                        },
+                        Err(error) => ToolResult {
+                            output: error,
+                            is_error: true,
+                        },
+                    },
+                    "status" => {
+                        let Some(task_id) = args.get("task_id").and_then(|v| v.as_str()) else {
+                            return ToolResult {
+                                output: "Missing required parameter: task_id (for action=status)"
+                                    .to_string(),
+                                is_error: true,
+                            };
+                        };
+                        match crate::unity_flow::get_task(&project_path, task_id.trim()).await {
+                            Ok(task) => match serde_json::to_string(&task) {
+                                Ok(json) => ToolResult {
+                                    output: json,
+                                    is_error: false,
+                                },
+                                Err(error) => ToolResult {
+                                    output: format!("Failed to serialize task status: {}", error),
+                                    is_error: true,
+                                },
+                            },
+                            Err(error) => ToolResult {
+                                output: error,
+                                is_error: true,
+                            },
+                        }
+                    }
+                    "wait" => {
+                        let Some(task_id) = args.get("task_id").and_then(|v| v.as_str()) else {
+                            return ToolResult {
+                                output: "Missing required parameter: task_id (for action=wait)"
+                                    .to_string(),
+                                is_error: true,
+                            };
+                        };
+                        let timeout_sec = args
+                            .get("timeout_sec")
+                            .and_then(|v| v.as_u64())
+                            .unwrap_or(120);
+                        match crate::unity_flow::wait_task(
+                            &project_path,
+                            task_id.trim(),
+                            std::time::Duration::from_secs(timeout_sec),
+                        )
+                        .await
+                        {
+                            Ok(task) => match serde_json::to_string(&task) {
+                                Ok(json) => ToolResult {
+                                    output: json,
+                                    is_error: false,
+                                },
+                                Err(error) => ToolResult {
+                                    output: format!("Failed to serialize waited task: {}", error),
+                                    is_error: true,
+                                },
+                            },
+                            Err(error) => ToolResult {
+                                output: error,
+                                is_error: true,
+                            },
+                        }
+                    }
+                    "cancel" => {
+                        let Some(task_id) = args.get("task_id").and_then(|v| v.as_str()) else {
+                            return ToolResult {
+                                output: "Missing required parameter: task_id (for action=cancel)"
+                                    .to_string(),
+                                is_error: true,
+                            };
+                        };
+                        match crate::unity_flow::cancel_task(&project_path, task_id.trim()).await {
+                            Ok(task) => match serde_json::to_string(&task) {
+                                Ok(json) => ToolResult {
+                                    output: json,
+                                    is_error: false,
+                                },
+                                Err(error) => ToolResult {
+                                    output: format!("Failed to serialize cancelled task: {}", error),
+                                    is_error: true,
+                                },
+                            },
+                            Err(error) => ToolResult {
+                                output: error,
+                                is_error: true,
+                            },
+                        }
+                    }
+                    _ => ToolResult {
+                        output: "Invalid action. Allowed values: start, status, wait, cancel"
+                            .to_string(),
+                        is_error: true,
+                    },
+                }
+            })
+        }),
+    }
+}

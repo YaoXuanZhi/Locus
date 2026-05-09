@@ -33,6 +33,7 @@ mod session;
 mod tool;
 pub mod unity_bridge;
 pub mod unity_csharp;
+pub mod unity_flow;
 mod unity_docs;
 pub mod unity_type_index;
 pub mod unity_yaml;

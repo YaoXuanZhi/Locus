@@ -1,0 +1,26 @@
+{
+  "description": "Run Unity PlayMode tests through the new flow orchestrator skeleton.\n\nThis tool is CLI-first and resilient by design: it creates a durable task record, runs background orchestration steps, and allows polling by task_id.\n\nUse `action=start` to create and launch a flow task, then use `action=status` with the same task_id to query progress/result.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["start", "status", "wait", "cancel"],
+        "description": "Flow action. `start` creates a new task. `status` checks an existing task. `wait` blocks until task completion or timeout. `cancel` marks a running task as cancelled."
+      },
+      "project_path": {
+        "type": "string",
+        "description": "Absolute path to the Unity project root. Required."
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Required when action is `status`, `wait`, or `cancel`."
+      },
+      "timeout_sec": {
+        "type": "integer",
+        "description": "Only used for action=`wait`. Defaults to 120."
+      }
+    },
+    "required": ["action", "project_path"]
+  }
+}

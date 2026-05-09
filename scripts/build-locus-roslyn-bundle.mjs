@@ -88,13 +88,19 @@ async function ensureIlRepack() {
   await mkdir(ilRepackDir, { recursive: true });
 
   if (process.platform === "win32") {
+    // Expand-Archive only accepts .zip extension; rename the .nupkg temporarily.
+    const zipCopy = packagePath.replace(/\.nupkg$/i, ".zip");
+    if (!existsSync(zipCopy)) {
+      const { copyFileSync: cpSync } = await import("node:fs");
+      cpSync(packagePath, zipCopy);
+    }
     run("powershell", [
       "-NoProfile",
       "-ExecutionPolicy",
       "Bypass",
       "-Command",
       "& { param($archive, $destination) Expand-Archive -LiteralPath $archive -DestinationPath $destination -Force }",
-      packagePath,
+      zipCopy,
       ilRepackDir,
     ]);
   } else {
